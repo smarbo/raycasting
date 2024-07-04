@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Map Maker</title>
+  <link href="mapmaker.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="pageContainer">
+    <div id="mapMaker">
+      Set Map Dimensions:
+      <input type="number" id="mapWidth" placeholder="Width(cells)" />
+      <input type="number" id="mapHeight" placeholder="Height(cells)" />
+      <button id="mapBegin">Begin</button>
+    </div>
+  </div>
+    <h1 id="encodingResult" style="color: white;"></h1><button onclick="copyResult()">Copy</button>
+  <script src="mapmaker.js"></script>
+    <script>
+    function copyResult () {
+      navigator.clipboard.writeText(encodingResult.innerText);
+      window.alert('Copied to clipboard!');
+    }
+    </script>
+</body>
+
+</html>

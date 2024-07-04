@@ -1,0 +1,53 @@
+body{
+  background: #101010;
+}
+
+.pageContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#mapMaker {
+  display: grid;
+  background: #303030;
+  color: white;
+  padding: 30px;
+  border-radius: 15px;
+}
+
+.editor-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.editor-bar>* {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.editor-bar > #redBtn {
+  background: red;
+}
+.editor-bar > #greenBtn {
+  background: green;
+}
+.editor-bar > #blueBtn {
+  background: blue;
+}
+.editor-bar > #eraseBtn {
+  background: linear-gradient(to bottom right, #ffcccc, #ff6666, #cc3333);
+}
+
+
+
+.grid-box {
+  width: 20px;
+  height: 20px;
+  background: #606060;
+  border: 1px solid #ccc;
+}
