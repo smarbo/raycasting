@@ -1,3 +1,48 @@
+class Color {
+  constructor(
+    public r: number,
+    public g: number,
+    public b: number,
+    public a: number,
+  ) { }
+
+  static red(): Color {
+    return new Color(1,0,0,1);
+  }
+
+  static green(): Color {
+    return new Color(0,1,0,1);
+  }
+
+  static blue(): Color {
+    return new Color(0,0,1,1);
+  }
+
+  static yellow(): Color {
+    return new Color(1,1,0,1);
+  }
+  
+  static purple(): Color {
+    return new Color(1,0,1,1);
+  }
+
+  static cyan(): Color {
+    return new Color(0,1,1,1);
+  }
+
+  brightness(factor: number): Color {
+    return new Color(factor*this.r,factor*this.g,factor*this.b,this.a);
+  }
+
+  toStyle(): string {
+    return `rgba(` + 
+      `${Math.floor(this.r * 255)}, ` +
+      `${Math.floor(this.g * 255)}, ` + 
+      `${Math.floor(this.b * 255)}, ` + 
+      `${this.a})`;
+  }
+}
+
 class Vector2 {
   constructor(
     public x: number,
@@ -95,9 +140,9 @@ const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
 const SCREEN_WIDTH = 500;
 const PLAYER_STEP_LEN = 0.5;
-const PLAYER_SPEED = 1;
+const PLAYER_SPEED = 3;
 // 0.25 is too slow, 1 is too fast
-const PLAYER_ROT_SPEED = 0.3;
+const PLAYER_ROT_SPEED = 0.4;
 
 function line(
   ctx: CanvasRenderingContext2D,
@@ -142,7 +187,7 @@ function hittingCell(p1: Vector2, p2: Vector2): Vector2 {
   );
 }
 
-type Scene = Array<Array<string | null>>;
+type Scene = Array<Array<Color | null>>;
 
 function castRay(scene: Scene, p1: Vector2, p2: Vector2): Vector2 {
   let start = p1;
@@ -232,7 +277,7 @@ function renderMinimap(
     for (let x = 0; x < gridSize.x; x++) {
       const color = scene[y][x];
       if (color !== null) {
-        ctx.fillStyle = color;
+        ctx.fillStyle = color.toStyle();
         ctx.fillRect(x, y, 1, 1);
       }
     }
@@ -270,8 +315,9 @@ function renderScene(
       if (color !== null) {
         const v = p.sub(player.position);
         const d = Vector2.fromAngle(player.direction);
+
         let stripHeight = ctx.canvas.height / v.dot(d);
-        ctx.fillStyle = color;
+        ctx.fillStyle = color.brightness(1/v.dot(d)).toStyle();
         ctx.fillRect(
           x * stripWidth,
           (ctx.canvas.height - stripHeight) * 0.5,
@@ -320,27 +366,29 @@ function renderGame(
   ctx.fillStyle = "#181818";
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   renderScene(ctx, player, scene);
-  //renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
+  renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 }
 
 (() => {
   console.log(`FOV: ${radToDeg(FOV)}`);
 
+  /*
   let scene = decodeMap(
     "W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsInJlZCIsInJlZCIsInJlZCIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLCJibHVlIiwiZ3JlZW4iLCJibHVlIixudWxsLCJibHVlIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLG51bGwsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLCJncmVlbiIsImJsdWUiLG51bGwsImJsdWUiLG51bGwsImdyZWVuIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCwicmVkIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCwiZ3JlZW4iLG51bGwsImdyZWVuIixudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwicmVkIixudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF1d",
   );
+  */
 
-  /*
+  
   let scene = [
-    [null, null, "red", "purple", null, null, null, null, null, null],
-    [null, null, null, "magenta", null, null, null, null, null, null],
-    [null, "blue", "green", "yellow", null, null, null, null, null, null],
+    [null, null, Color.cyan(), Color.purple(), null, null, null, null, null, null],
+    [null, null, null, Color.yellow(), null, null, null, null, null, null],
+    [null, Color.red(), Color.green(), Color.blue(), null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null, null, null],
   ];
-  */
+  
   const game = document.querySelector("#game") as HTMLCanvasElement | null;
 
   if (game == null) throw new Error("No canvas with id `game`");
@@ -352,7 +400,7 @@ function renderGame(
   const ctx = game.getContext("2d") as CanvasRenderingContext2D;
   if (ctx === null) throw new Error("2D Context not supported.");
 
-  const player = new Player(new Vector2(2.5, 2.5), Math.PI*0.3);
+  const player = new Player(new Vector2(5.5, 5.5), Math.PI * 1.25);
 
   let movingForward = false;
   let movingBackward = false;
@@ -362,26 +410,26 @@ function renderGame(
   window.addEventListener("keydown", (e) => {
     switch (e.key.toLowerCase()) {
       case "arrowup":
-      case "w": movingForward =  true; break;
+      case "w": movingForward = true; break;
       case "arrowdown":
       case "s": movingBackward = true; break;
       case "arrowleft":
-      case "a": turningLeft =    true; break;
+      case "a": turningLeft = true; break;
       case "arrowright":
-      case "d": turningRight =   true; break;
+      case "d": turningRight = true; break;
     }
   });
 
   window.addEventListener("keyup", (e) => {
     switch (e.key.toLowerCase()) {
       case "arrowup":
-      case "w": movingForward =  false; break;
+      case "w": movingForward = false; break;
       case "arrowdown":
       case "s": movingBackward = false; break;
       case "arrowleft":
-      case "a": turningLeft =    false; break;
+      case "a": turningLeft = false; break;
       case "arrowright":
-      case "d": turningRight =   false; break;
+      case "d": turningRight = false; break;
     }
   });
 
@@ -404,7 +452,7 @@ function renderGame(
       angularVelocity += Math.PI * PLAYER_ROT_SPEED;
     }
 
-    player.direction = player.direction + angularVelocity*deltaTime;
+    player.direction = player.direction + angularVelocity * deltaTime;
     player.position = player.position.add(velocity.scale(deltaTime));
     renderGame(ctx, player, scene);
     window.requestAnimationFrame(frame);

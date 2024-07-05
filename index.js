@@ -1,4 +1,40 @@
 "use strict";
+class Color {
+    constructor(r, g, b, a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+    static red() {
+        return new Color(1, 0, 0, 1);
+    }
+    static green() {
+        return new Color(0, 1, 0, 1);
+    }
+    static blue() {
+        return new Color(0, 0, 1, 1);
+    }
+    static yellow() {
+        return new Color(1, 1, 0, 1);
+    }
+    static purple() {
+        return new Color(1, 0, 1, 1);
+    }
+    static cyan() {
+        return new Color(0, 1, 1, 1);
+    }
+    brightness(factor) {
+        return new Color(factor * this.r, factor * this.g, factor * this.b, this.a);
+    }
+    toStyle() {
+        return `rgba(` +
+            `${Math.floor(this.r * 255)}, ` +
+            `${Math.floor(this.g * 255)}, ` +
+            `${Math.floor(this.b * 255)}, ` +
+            `${this.a})`;
+    }
+}
 class Vector2 {
     constructor(x, y) {
         this.x = x;
@@ -74,9 +110,9 @@ const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
 const SCREEN_WIDTH = 500;
 const PLAYER_STEP_LEN = 0.5;
-const PLAYER_SPEED = 1;
+const PLAYER_SPEED = 3;
 // 0.25 is too slow, 1 is too fast
-const PLAYER_ROT_SPEED = 0.3;
+const PLAYER_ROT_SPEED = 0.4;
 function line(ctx, p1, p2, color, width) {
     ctx.strokeStyle = color || "magenta";
     ctx.lineWidth = width || 0.1;
@@ -169,7 +205,7 @@ function renderMinimap(ctx, player, position, size, scene) {
         for (let x = 0; x < gridSize.x; x++) {
             const color = scene[y][x];
             if (color !== null) {
-                ctx.fillStyle = color;
+                ctx.fillStyle = color.toStyle();
                 ctx.fillRect(x, y, 1, 1);
             }
         }
@@ -199,7 +235,7 @@ function renderScene(ctx, player, scene) {
                 const v = p.sub(player.position);
                 const d = Vector2.fromAngle(player.direction);
                 let stripHeight = ctx.canvas.height / v.dot(d);
-                ctx.fillStyle = color;
+                ctx.fillStyle = color.brightness(1 / v.dot(d)).toStyle();
                 ctx.fillRect(x * stripWidth, (ctx.canvas.height - stripHeight) * 0.5, stripWidth, stripHeight > 1 ? stripHeight : 1);
             }
         }
@@ -228,22 +264,24 @@ function renderGame(ctx, player, scene) {
     ctx.fillStyle = "#181818";
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     renderScene(ctx, player, scene);
-    //renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
+    renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 }
 (() => {
     console.log(`FOV: ${radToDeg(FOV)}`);
-    let scene = decodeMap("W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsInJlZCIsInJlZCIsInJlZCIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLCJibHVlIiwiZ3JlZW4iLCJibHVlIixudWxsLCJibHVlIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLG51bGwsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLCJncmVlbiIsImJsdWUiLG51bGwsImJsdWUiLG51bGwsImdyZWVuIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCwicmVkIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCwiZ3JlZW4iLG51bGwsImdyZWVuIixudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwicmVkIixudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF1d");
     /*
-    let scene = [
-      [null, null, "red", "purple", null, null, null, null, null, null],
-      [null, null, null, "magenta", null, null, null, null, null, null],
-      [null, "blue", "green", "yellow", null, null, null, null, null, null],
-      [null, null, null, null, null, null, null, null, null, null],
-      [null, null, null, null, null, null, null, null, null, null],
-      [null, null, null, null, null, null, null, null, null, null],
-      [null, null, null, null, null, null, null, null, null, null],
-    ];
+    let scene = decodeMap(
+      "W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsInJlZCIsInJlZCIsInJlZCIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLCJibHVlIiwiZ3JlZW4iLCJibHVlIixudWxsLCJibHVlIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLG51bGwsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLCJncmVlbiIsImJsdWUiLG51bGwsImJsdWUiLG51bGwsImdyZWVuIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCwicmVkIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCwiZ3JlZW4iLG51bGwsImdyZWVuIixudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwicmVkIixudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF1d",
+    );
     */
+    let scene = [
+        [null, null, Color.cyan(), Color.purple(), null, null, null, null, null, null],
+        [null, null, null, Color.yellow(), null, null, null, null, null, null],
+        [null, Color.red(), Color.green(), Color.blue(), null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null, null, null],
+    ];
     const game = document.querySelector("#game");
     if (game == null)
         throw new Error("No canvas with id `game`");
@@ -253,7 +291,7 @@ function renderGame(ctx, player, scene) {
     const ctx = game.getContext("2d");
     if (ctx === null)
         throw new Error("2D Context not supported.");
-    const player = new Player(new Vector2(2.5, 2.5), Math.PI * 0.3);
+    const player = new Player(new Vector2(5.5, 5.5), Math.PI * 1.25);
     let movingForward = false;
     let movingBackward = false;
     let turningLeft = false;
