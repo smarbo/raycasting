@@ -40,6 +40,12 @@ class Vector2 {
             return new Vector2(0, 0);
         return new Vector2(this.x / l, this.y / l);
     }
+    sqrLength() {
+        return this.x ** 2 + this.y ** 2;
+    }
+    sqrDistance(that) {
+        return that.sub(this).sqrLength();
+    }
     distance(that) {
         return that.sub(this).length();
     }
@@ -66,7 +72,7 @@ const EPS = 1e-6;
 const NEAR_CLIPPING_PLANE = 1.0;
 const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
-const SCREEN_WIDTH = 2000;
+const SCREEN_WIDTH = 300;
 const PLAYER_STEP_LEN = 0.5;
 function line(ctx, p1, p2, color, width) {
     ctx.strokeStyle = color || "magenta";
@@ -96,9 +102,10 @@ function hittingCell(p1, p2) {
     return new Vector2(Math.floor(p2.x + Math.sign(d.x) * EPS), Math.floor(p2.y + Math.sign(d.y) * EPS));
 }
 function castRay(scene, p1, p2) {
-    for (;;) {
+    let start = p1;
+    while (start.sqrDistance(p1) < FAR_CLIPPING_PLANE ** 2) {
         const c = hittingCell(p1, p2);
-        if (!insideScene(scene, c) || scene[c.y][c.x] !== null)
+        if (insideScene(scene, c) && scene[c.y][c.x] !== null)
             break;
         const p3 = rayStep(p1, p2);
         p1 = p2;
@@ -124,7 +131,7 @@ function rayStep(p1, p2) {
             const y3 = snap(p2.y, d.y);
             const x3 = (y3 - c) / k;
             const p3t = new Vector2(x3, y3);
-            if (p2.distance(p3t) < p2.distance(p3)) {
+            if (p2.sqrDistance(p3t) < p2.sqrDistance(p3)) {
                 p3 = p3t;
             }
         }
