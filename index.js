@@ -69,11 +69,14 @@ function decodeMap(encoded) {
     return JSON.parse(atob(encoded));
 }
 const EPS = 1e-6;
-const NEAR_CLIPPING_PLANE = 1.0;
+const NEAR_CLIPPING_PLANE = 0.25;
 const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
-const SCREEN_WIDTH = 300;
+const SCREEN_WIDTH = 500;
 const PLAYER_STEP_LEN = 0.5;
+const PLAYER_SPEED = 1;
+// 0.25 is too slow, 1 is too fast
+const PLAYER_ROT_SPEED = 0.3;
 function line(ctx, p1, p2, color, width) {
     ctx.strokeStyle = color || "magenta";
     ctx.lineWidth = width || 0.1;
@@ -225,11 +228,11 @@ function renderGame(ctx, player, scene) {
     ctx.fillStyle = "#181818";
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     renderScene(ctx, player, scene);
-    renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
+    //renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 }
 (() => {
     console.log(`FOV: ${radToDeg(FOV)}`);
-    let scene = decodeMap("W1sicmVkIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsXSxbInJlZCIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sWyJyZWQiLCJncmVlbiIsImJsdWUiLCJncmVlbiIsImJsdWUiLCJncmVlbiIsImJsdWUiLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdXQ==");
+    let scene = decodeMap("W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsInJlZCIsInJlZCIsInJlZCIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLCJibHVlIiwiZ3JlZW4iLCJibHVlIixudWxsLCJibHVlIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLG51bGwsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLCJncmVlbiIsImJsdWUiLG51bGwsImJsdWUiLG51bGwsImdyZWVuIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCwicmVkIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCwiZ3JlZW4iLG51bGwsImdyZWVuIixudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwicmVkIixudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF1d");
     /*
     let scene = [
       [null, null, "red", "purple", null, null, null, null, null, null],
@@ -250,26 +253,77 @@ function renderGame(ctx, player, scene) {
     const ctx = game.getContext("2d");
     if (ctx === null)
         throw new Error("2D Context not supported.");
-    const player = new Player(new Vector2(5, 5), Math.PI * 1.25);
+    const player = new Player(new Vector2(2.5, 2.5), Math.PI * 0.3);
+    let movingForward = false;
+    let movingBackward = false;
+    let turningLeft = false;
+    let turningRight = false;
     window.addEventListener("keydown", (e) => {
         switch (e.key.toLowerCase()) {
+            case "arrowup":
             case "w":
-                player.position = player.position.add(Vector2.fromAngle(player.direction).scale(PLAYER_STEP_LEN));
-                renderGame(ctx, player, scene);
+                movingForward = true;
                 break;
+            case "arrowdown":
             case "s":
-                player.position = player.position.sub(Vector2.fromAngle(player.direction).scale(PLAYER_STEP_LEN));
-                renderGame(ctx, player, scene);
+                movingBackward = true;
                 break;
-            case "d":
-                player.direction += Math.PI * 0.04;
-                renderGame(ctx, player, scene);
-                break;
+            case "arrowleft":
             case "a":
-                player.direction -= Math.PI * 0.04;
-                renderGame(ctx, player, scene);
+                turningLeft = true;
+                break;
+            case "arrowright":
+            case "d":
+                turningRight = true;
                 break;
         }
+    });
+    window.addEventListener("keyup", (e) => {
+        switch (e.key.toLowerCase()) {
+            case "arrowup":
+            case "w":
+                movingForward = false;
+                break;
+            case "arrowdown":
+            case "s":
+                movingBackward = false;
+                break;
+            case "arrowleft":
+            case "a":
+                turningLeft = false;
+                break;
+            case "arrowright":
+            case "d":
+                turningRight = false;
+                break;
+        }
+    });
+    let prevTimestamp = 0;
+    const frame = (timestamp) => {
+        const deltaTime = (timestamp - prevTimestamp) / 1000;
+        prevTimestamp = timestamp;
+        let velocity = Vector2.zero();
+        let angularVelocity = 0.0;
+        if (movingForward) {
+            velocity = velocity.add(Vector2.fromAngle(player.direction).scale(PLAYER_SPEED));
+        }
+        if (movingBackward) {
+            velocity = velocity.sub(Vector2.fromAngle(player.direction).scale(PLAYER_SPEED));
+        }
+        if (turningLeft) {
+            angularVelocity -= Math.PI * PLAYER_ROT_SPEED;
+        }
+        if (turningRight) {
+            angularVelocity += Math.PI * PLAYER_ROT_SPEED;
+        }
+        player.direction = player.direction + angularVelocity * deltaTime;
+        player.position = player.position.add(velocity.scale(deltaTime));
+        renderGame(ctx, player, scene);
+        window.requestAnimationFrame(frame);
+    };
+    window.requestAnimationFrame((timestamp) => {
+        prevTimestamp = timestamp;
+        window.requestAnimationFrame(frame);
     });
     renderGame(ctx, player, scene);
 })();

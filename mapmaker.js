@@ -1,6 +1,7 @@
 "use strict";
 const mapWInput = document.querySelector("#mapWidth");
 const mapHInput = document.querySelector("#mapHeight");
+const mapCode = document.querySelector("#mapCode");
 const mapMakerContainer = document.querySelector("#mapMaker");
 const mapButton = document.querySelector("#mapBegin");
 const encodingResult = document.querySelector("#encodingResult");
@@ -8,15 +9,29 @@ function encode(map) {
     const mapString = JSON.stringify(map);
     return btoa(mapString);
 }
+function decode(code) {
+    return JSON.parse(atob(code));
+}
 mapButton.onclick = () => {
     var _a, _b;
-    const mapWidth = parseInt(mapWInput.value);
-    const mapHeight = parseInt(mapHInput.value);
-    if (!mapWidth || mapWidth <= 0)
-        throw new Error("Map width must be greater than zero.");
-    if (!mapHeight || mapHeight <= 0)
-        throw new Error("Map height must be greater than zero.");
-    const map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(null));
+    let mapWidth = parseInt(mapWInput.value);
+    let mapHeight = parseInt(mapHInput.value);
+    let map = [[]];
+    if (mapCode.value) {
+        map = decode(mapCode.value);
+        mapHeight = map.length;
+        mapWidth = map[0].length;
+    }
+    else {
+        if (!mapWidth || mapWidth <= 0)
+            throw new Error("Map width must be greater than zero.");
+        if (!mapHeight || mapHeight <= 0)
+            throw new Error("Map height must be greater than zero.");
+    }
+    if (map[0].length <= 0) {
+        map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(null));
+    }
+    console.log(map);
     const editorBar = document.createElement("div");
     editorBar.classList.add("editor-bar");
     editorBar.innerHTML = `
@@ -66,7 +81,10 @@ mapButton.onclick = () => {
             for (let row = 0; row < mapWidth; row++) {
                 const box = document.createElement("div");
                 box.classList.add("grid-box");
-                box.style.background = map[col][row];
+                let cell = map[col][row];
+                if (cell !== null) {
+                    box.style.background = cell;
+                }
                 box.onclick = () => {
                     map[col][row] = selectedColor;
                     updateMap();

@@ -1,26 +1,41 @@
 const mapWInput = document.querySelector("#mapWidth") as HTMLInputElement;
 const mapHInput = document.querySelector("#mapHeight") as HTMLInputElement;
+const mapCode = document.querySelector("#mapCode") as HTMLInputElement;
 const mapMakerContainer = document.querySelector("#mapMaker") as HTMLDivElement;
 const mapButton = document.querySelector("#mapBegin") as HTMLButtonElement;
-const encodingResult = document.querySelector("#encodingResult") as HTMLHeadingElement;
+const encodingResult = document.querySelector(
+  "#encodingResult",
+) as HTMLHeadingElement;
 
 function encode(map: Array<Array<string | null>>): string {
   const mapString = JSON.stringify(map);
   return btoa(mapString);
 }
 
+function decode(code: string): Array<Array<string | null>> {
+  return JSON.parse(atob(code));
+}
+
 mapButton.onclick = () => {
-  const mapWidth = parseInt(mapWInput.value);
-  const mapHeight = parseInt(mapHInput.value);
+  let mapWidth = parseInt(mapWInput.value);
+  let mapHeight = parseInt(mapHInput.value);
+  let map: Array<Array<string | null>> = [[]];
 
-  if (!mapWidth || mapWidth <= 0)
-    throw new Error("Map width must be greater than zero.");
-  if (!mapHeight || mapHeight <= 0)
-    throw new Error("Map height must be greater than zero.");
+  if (mapCode.value) {
+    map = decode(mapCode.value);
+    mapHeight = map.length;
+    mapWidth = map[0].length;
+  } else {
+    if (!mapWidth || mapWidth <= 0)
+      throw new Error("Map width must be greater than zero.");
+    if (!mapHeight || mapHeight <= 0)
+      throw new Error("Map height must be greater than zero.");
+  }
+  if (map[0].length <= 0) {
+    map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(null));
+  }
 
-  const map = Array.from({ length: mapHeight }, () =>
-    Array(mapWidth).fill(null),
-  );
+  console.log(map);
 
   const editorBar = document.createElement("div");
   editorBar.classList.add("editor-bar");
@@ -81,7 +96,10 @@ mapButton.onclick = () => {
       for (let row = 0; row < mapWidth; row++) {
         const box = document.createElement("div");
         box.classList.add("grid-box");
-        box.style.background = map[col][row];
+        let cell = map[col][row];
+        if (cell !== null){
+         box.style.background = cell;
+        }
         box.onclick = () => {
           map[col][row] = selectedColor;
           updateMap();
@@ -89,15 +107,13 @@ mapButton.onclick = () => {
         mapMakerContainer.appendChild(box);
       }
     }
-
-    
   }
   const encodeBtn = document.createElement("button");
-    encodeBtn.innerHTML = "Encode";
-    encodeBtn.onclick = () => {
-      encodingResult.innerText = encode(map);
-    };
+  encodeBtn.innerHTML = "Encode";
+  encodeBtn.onclick = () => {
+    encodingResult.innerText = encode(map);
+  };
 
-    mapMakerContainer.parentNode?.appendChild(encodeBtn);
+  mapMakerContainer.parentNode?.appendChild(encodeBtn);
   updateMap();
 };
