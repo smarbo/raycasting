@@ -1,4 +1,4 @@
-body{
+body {
   background: #101010;
 }
 
@@ -18,32 +18,46 @@ body{
 }
 
 .editor-bar {
+  background: #252525;
+  padding: 25px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  position: absolute;
+  flex-direction: column;
+  top: -100px;
+  left: 50%;
+  translate: -50%;
+  height: 50px;
 }
 
-.editor-bar>* {
+
+.editor-bar>#barItems>* {
   width: 20px;
   height: 20px;
   cursor: pointer;
 }
 
-.editor-bar > #redBtn {
+.editor-bar>#barItems {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.editor-bar>#barItems>#redBtn {
   background: red;
 }
-.editor-bar > #greenBtn {
+
+.editor-bar>#barItems>#greenBtn {
   background: green;
 }
-.editor-bar > #blueBtn {
+
+.editor-bar>#barItems>#blueBtn {
   background: blue;
 }
-.editor-bar > #eraseBtn {
+
+.editor-bar>#barItems>#eraseBtn {
   background: linear-gradient(to bottom right, #ffcccc, #ff6666, #cc3333);
 }
-
-
 
 .grid-box {
   width: 20px;

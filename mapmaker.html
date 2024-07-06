@@ -20,8 +20,10 @@
       <button id="mapBegin">Begin</button>
     </div>
   </div>
-    <h1 id="encodingResult" style="color: white;"></h1><button onclick="copyResult()">Copy</button>
+    <code id="encodingResult" style="color: white;"></code><br><button onclick="copyResult()">Copy</button>
   <script src="mapmaker.js"></script>
+  <script src="types.js"></script>
+  <script src="index.js"></script>
     <script>
     function copyResult () {
       navigator.clipboard.writeText(encodingResult.innerText);

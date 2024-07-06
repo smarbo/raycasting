@@ -13,10 +13,10 @@ function decode(code) {
     return JSON.parse(atob(code));
 }
 mapButton.onclick = () => {
-    var _a, _b;
+    var _a;
     let mapWidth = parseInt(mapWInput.value);
     let mapHeight = parseInt(mapHInput.value);
-    let map = [[]];
+    var map = [[]];
     if (mapCode.value) {
         map = decode(mapCode.value);
         mapHeight = map.length;
@@ -35,41 +35,70 @@ mapButton.onclick = () => {
     const editorBar = document.createElement("div");
     editorBar.classList.add("editor-bar");
     editorBar.innerHTML = `
-        <div id="redBtn"></div>
-        <div id="greenBtn"></div>
-        <div id="blueBtn"></div>
-        <div id="eraseBtn"></div>
+          <input id="imageURL" placeholder="Image URL" /><button id="loadImage">Load</button>
+        <div id="barItems">
+          <div id="redBtn"></div>
+          <div id="greenBtn"></div>
+          <div id="blueBtn"></div>
+          <div id="eraseBtn"></div>
+        </div>
   `;
     (_a = mapMakerContainer.parentNode) === null || _a === void 0 ? void 0 : _a.prepend(editorBar);
-    let selectedColor = null;
+    let selected = null;
     const redBtn = document.querySelector("#redBtn");
     const greenBtn = document.querySelector("#greenBtn");
     const blueBtn = document.querySelector("#blueBtn");
     const eraseBtn = document.querySelector("#eraseBtn");
+    const imageURL = document.querySelector("#imageURL");
+    const loadImage = document.querySelector("#loadImage");
+    const barItems = document.querySelector("#barItems");
+    let imageBtn = undefined;
+    loadImage.onclick = () => {
+        let url = imageURL.value;
+        let urlObj = {
+            url: url,
+        };
+        resetBorders();
+        imageBtn = document.createElement("div");
+        imageBtn.style.backgroundImage = `url(${url})`;
+        imageBtn.style.backgroundRepeat = `no-repeat`;
+        imageBtn.style.backgroundSize = `cover`;
+        imageBtn.onclick = () => {
+            resetBorders();
+            if (imageBtn)
+                imageBtn.style.border = `2px solid ${borderColor}`;
+            selected = urlObj;
+        };
+        imageBtn.style.border = `2px solid ${borderColor}`;
+        barItems.append(imageBtn);
+        selected = urlObj;
+    };
     function resetBorders() {
         redBtn.style.border = "";
         greenBtn.style.border = "";
         blueBtn.style.border = "";
         eraseBtn.style.border = "";
+        if (imageBtn)
+            imageBtn.style.border = "";
     }
     const borderColor = "white";
     redBtn.onclick = () => {
-        selectedColor = "red";
+        selected = Color.red();
         resetBorders();
         redBtn.style.border = `2px solid ${borderColor}`;
     };
     greenBtn.onclick = () => {
-        selectedColor = "green";
+        selected = Color.green();
         resetBorders();
         greenBtn.style.border = `2px solid ${borderColor}`;
     };
     blueBtn.onclick = () => {
-        selectedColor = "blue";
+        selected = Color.blue();
         resetBorders();
         blueBtn.style.border = `2px solid ${borderColor}`;
     };
     eraseBtn.onclick = () => {
-        selectedColor = null;
+        selected = null;
         resetBorders();
         eraseBtn.style.border = `2px solid ${borderColor}`;
     };
@@ -82,23 +111,23 @@ mapButton.onclick = () => {
                 const box = document.createElement("div");
                 box.classList.add("grid-box");
                 let cell = map[col][row];
-                if (cell !== null) {
-                    box.style.background = cell;
+                if (cell instanceof Color) {
+                    box.style.background = cell.toStyle();
+                }
+                else if (cell && cell.url) {
+                    box.style.backgroundImage = `url(${cell.url})`;
+                    box.style.backgroundRepeat = `no-repeat`;
+                    box.style.backgroundSize = `cover`;
                 }
                 box.onclick = () => {
-                    map[col][row] = selectedColor;
+                    map[col][row] = selected;
                     updateMap();
                 };
                 mapMakerContainer.appendChild(box);
             }
         }
-    }
-    const encodeBtn = document.createElement("button");
-    encodeBtn.innerHTML = "Encode";
-    encodeBtn.onclick = () => {
         encodingResult.innerText = encode(map);
-    };
-    (_b = mapMakerContainer.parentNode) === null || _b === void 0 ? void 0 : _b.appendChild(encodeBtn);
+    }
     updateMap();
 };
 //# sourceMappingURL=mapmaker.js.map

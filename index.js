@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 class Color {
     constructor(r, g, b, a) {
         this.r = r;
@@ -24,15 +33,19 @@ class Color {
     static cyan() {
         return new Color(0, 1, 1, 1);
     }
+    static fromObject(object) {
+        let { r, g, b, a } = object;
+        return new Color(r, g, b, a);
+    }
     brightness(factor) {
         return new Color(factor * this.r, factor * this.g, factor * this.b, this.a);
     }
     toStyle() {
-        return `rgba(` +
+        return (`rgba(` +
             `${Math.floor(this.r * 255)}, ` +
             `${Math.floor(this.g * 255)}, ` +
             `${Math.floor(this.b * 255)}, ` +
-            `${this.a})`;
+            `${this.a})`);
     }
 }
 class Vector2 {
@@ -102,13 +115,34 @@ function radToDeg(rad) {
     return rad * (180 / Math.PI);
 }
 function decodeMap(encoded) {
-    return JSON.parse(atob(encoded));
+    let scene = JSON.parse(atob(encoded));
+    let result = [];
+    for (let y = 0; y < scene.length; y++) {
+        let row = [];
+        for (let x = 0; x < scene[y].length; x++) {
+            let cell = scene[y][x];
+            if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
+                row.push(Color.fromObject(cell));
+            }
+            else if (cell && 'url' in cell) {
+                let img = document.createElement("img");
+                img.src = cell.url;
+                row.push(img);
+            }
+            else {
+                row.push(null);
+            }
+        }
+        result.push(row);
+    }
+    return result;
 }
 const EPS = 1e-6;
 const NEAR_CLIPPING_PLANE = 0.25;
 const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
-const SCREEN_WIDTH = 500;
+// resolution of screen (how many rays are shot)
+const SCREEN_WIDTH = 400;
 const PLAYER_STEP_LEN = 0.5;
 const PLAYER_SPEED = 3;
 // 0.25 is too slow, 1 is too fast
@@ -203,10 +237,13 @@ function renderMinimap(ctx, player, position, size, scene) {
     ctx.fillRect(0, 0, ...gridSize.array());
     for (let y = 0; y < gridSize.y; y++) {
         for (let x = 0; x < gridSize.x; x++) {
-            const color = scene[y][x];
-            if (color !== null) {
-                ctx.fillStyle = color.toStyle();
+            const cell = scene[y][x];
+            if (cell instanceof Color) {
+                ctx.fillStyle = cell.toStyle();
                 ctx.fillRect(x, y, 1, 1);
+            }
+            else if (cell instanceof HTMLImageElement) {
+                ctx.drawImage(cell, x, y, 1, 1);
             }
         }
     }
@@ -230,13 +267,25 @@ function renderScene(ctx, player, scene) {
         const p = castRay(scene, player.position, r1.lerp(r2, x / SCREEN_WIDTH));
         const c = hittingCell(player.position, p);
         if (insideScene(scene, c)) {
-            const color = scene[c.y][c.x];
-            if (color !== null) {
+            const cell = scene[c.y][c.x];
+            if (cell instanceof Color) {
                 const v = p.sub(player.position);
                 const d = Vector2.fromAngle(player.direction);
                 let stripHeight = ctx.canvas.height / v.dot(d);
-                ctx.fillStyle = color.brightness(1 / v.dot(d)).toStyle();
+                ctx.fillStyle = cell.brightness(1 / v.dot(d)).toStyle();
                 ctx.fillRect(x * stripWidth, (ctx.canvas.height - stripHeight) * 0.5, stripWidth, stripHeight > 1 ? stripHeight : 1);
+            }
+            else if (cell instanceof HTMLImageElement) {
+                const v = p.sub(player.position);
+                const d = Vector2.fromAngle(player.direction);
+                let stripHeight = ctx.canvas.height / v.dot(d);
+                const t = p.sub(c);
+                let u;
+                if ((Math.abs(t.x) < EPS || Math.abs(t.x - 1) < EPS) && t.y > 0)
+                    u = t.y;
+                else
+                    u = t.x;
+                ctx.drawImage(cell, u * cell.width, 0, 1, cell.height, x * stripWidth, (ctx.canvas.height - stripHeight) * 0.5, stripWidth, stripHeight);
             }
         }
     }
@@ -266,22 +315,17 @@ function renderGame(ctx, player, scene) {
     renderScene(ctx, player, scene);
     renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 }
-(() => {
-    console.log(`FOV: ${radToDeg(FOV)}`);
-    /*
-    let scene = decodeMap(
-      "W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsInJlZCIsInJlZCIsInJlZCIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwicmVkIixudWxsLCJibHVlIiwiZ3JlZW4iLCJibHVlIixudWxsLCJibHVlIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLG51bGwsImdyZWVuIiwiYmx1ZSIsImdyZWVuIixudWxsLCJncmVlbiIsbnVsbCxudWxsXSxbbnVsbCwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCxudWxsLCJncmVlbiIsImJsdWUiLG51bGwsImJsdWUiLG51bGwsImdyZWVuIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCxudWxsLG51bGwsImdyZWVuIixudWxsLCJibHVlIixudWxsLG51bGxdLFtudWxsLCJncmVlbiIsbnVsbCwiYmx1ZSIsImdyZWVuIiwiYmx1ZSIsbnVsbCwiYmx1ZSIsbnVsbCwicmVkIixudWxsLG51bGxdLFtudWxsLCJibHVlIixudWxsLG51bGwsbnVsbCwiZ3JlZW4iLG51bGwsImdyZWVuIixudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwiZ3JlZW4iLCJibHVlIiwicmVkIixudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF1d",
-    );
-    */
-    let scene = [
-        [null, null, Color.cyan(), Color.purple(), null, null, null, null, null, null],
-        [null, null, null, Color.yellow(), null, null, null, null, null, null],
-        [null, Color.red(), Color.green(), Color.blue(), null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null, null, null],
-    ];
+function loadImageData(url) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const image = new Image();
+        image.src = url;
+        return new Promise((res, rej) => {
+            image.onload = () => res(image);
+            image.onerror = rej;
+        });
+    });
+}
+(() => __awaiter(void 0, void 0, void 0, function* () {
     const game = document.querySelector("#game");
     if (game == null)
         throw new Error("No canvas with id `game`");
@@ -291,6 +335,40 @@ function renderGame(ctx, player, scene) {
     const ctx = game.getContext("2d");
     if (ctx === null)
         throw new Error("2D Context not supported.");
+    const blueMan = yield loadImageData("images/profile.jpg");
+    const typeScript = yield loadImageData("images/typescript.jpg");
+    let scene = decodeMap("W1t7InIiOjAsImciOjAsImIiOjEsImEiOjF9LG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsbnVsbCxudWxsLHsiciI6MSwiZyI6MCwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwseyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSxudWxsXSxbbnVsbCxudWxsLHsiciI6MCwiZyI6MSwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy9wcm9maWxlLmpwZyJ9LHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy9wcm9maWxlLmpwZyJ9LG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy9wcm9maWxlLmpwZyJ9LG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCx7InIiOjEsImciOjAsImIiOjAsImEiOjF9LG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLHsiciI6MCwiZyI6MCwiYiI6MSwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbF1d");
+    /*let scene: Scene = [
+      [
+        null,
+        null,
+        Color.cyan(),
+        typeScript,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      [null, null, null, Color.yellow(), null, null, null, null, null, null],
+      [
+        null,
+        Color.red(),
+        Color.green(),
+        blueMan,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      [null, null, null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null, null, null],
+    ];*/
     const player = new Player(new Vector2(5.5, 5.5), Math.PI * 1.25);
     let movingForward = false;
     let movingBackward = false;
@@ -364,5 +442,5 @@ function renderGame(ctx, player, scene) {
         window.requestAnimationFrame(frame);
     });
     renderGame(ctx, player, scene);
-})();
+}))();
 //# sourceMappingURL=index.js.map
