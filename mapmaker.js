@@ -12,13 +12,34 @@ function encode(map) {
 function decode(code) {
     return JSON.parse(atob(code));
 }
+function decodeMakerMap(encoded) {
+    let scene = JSON.parse(atob(encoded));
+    let result = [];
+    for (let y = 0; y < scene.length; y++) {
+        let row = [];
+        for (let x = 0; x < scene[y].length; x++) {
+            let cell = scene[y][x];
+            if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
+                row.push(Color.fromObject(cell));
+            }
+            else if (cell && cell.url) {
+                row.push(cell);
+            }
+            else {
+                row.push(null);
+            }
+        }
+        result.push(row);
+    }
+    return result;
+}
 mapButton.onclick = () => {
     var _a;
     let mapWidth = parseInt(mapWInput.value);
     let mapHeight = parseInt(mapHInput.value);
     var map = [[]];
     if (mapCode.value) {
-        map = decode(mapCode.value);
+        map = decodeMakerMap(mapCode.value);
         mapHeight = map.length;
         mapWidth = map[0].length;
     }
@@ -31,7 +52,6 @@ mapButton.onclick = () => {
     if (map[0].length <= 0) {
         map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(null));
     }
-    console.log(map);
     const editorBar = document.createElement("div");
     editorBar.classList.add("editor-bar");
     editorBar.innerHTML = `
@@ -106,6 +126,7 @@ mapButton.onclick = () => {
         mapMakerContainer.innerHTML = "";
         mapMakerContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 1fr)`;
         mapMakerContainer.style.gridTemplateRows = `repeat(${mapHeight}, 1fr)`;
+        console.log(map);
         for (let col = 0; col < mapHeight; col++) {
             for (let row = 0; row < mapWidth; row++) {
                 const box = document.createElement("div");

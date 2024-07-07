@@ -16,8 +16,29 @@ function decode(code: string): MakerScene {
   return JSON.parse(atob(code));
 }
 
+function decodeMakerMap(encoded: string): MakerScene {
+  let scene: MakerScene = JSON.parse(atob(encoded));
+  let result: MakerScene = [];
 
-type MakerScene = Array<Array<Color | ImageURL | null>>;
+  for (let y = 0; y < scene.length; y++) {
+    let row: Array<ImageURL | EncodedColor | null> = [];
+    for (let x = 0; x < scene[y].length; x++) {
+      let cell = scene[y][x];
+      if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
+        row.push(Color.fromObject(cell as EncodedColor));
+      } else if (cell && (cell as ImageURL).url) {
+        row.push(cell);
+      } else{
+        row.push(null);
+      }
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+
+type MakerScene = Array<Array<EncodedColor | ImageURL | null>>;
 
 mapButton.onclick = () => {
   let mapWidth = parseInt(mapWInput.value);
@@ -25,7 +46,7 @@ mapButton.onclick = () => {
   var map: MakerScene = [[]];
 
   if (mapCode.value) {
-    map = decode(mapCode.value);
+    map = decodeMakerMap(mapCode.value);
     mapHeight = map.length;
     mapWidth = map[0].length;
   } else {
@@ -37,8 +58,6 @@ mapButton.onclick = () => {
   if (map[0].length <= 0) {
     map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(null));
   }
-
-  console.log(map);
 
   const editorBar = document.createElement("div");
   editorBar.classList.add("editor-bar");
@@ -124,6 +143,7 @@ mapButton.onclick = () => {
     mapMakerContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 1fr)`;
     mapMakerContainer.style.gridTemplateRows = `repeat(${mapHeight}, 1fr)`;
 
+    console.log(map);
     for (let col = 0; col < mapHeight; col++) {
       for (let row = 0; row < mapWidth; row++) {
         const box = document.createElement("div");
@@ -131,8 +151,8 @@ mapButton.onclick = () => {
         let cell = map[col][row];
         if (cell instanceof Color) {
           box.style.background = cell.toStyle();
-        } else if (cell && cell.url) {
-          box.style.backgroundImage = `url(${cell.url})`;
+        } else if (cell && (cell as ImageURL).url) {
+          box.style.backgroundImage = `url(${(cell as ImageURL).url})`;
           box.style.backgroundRepeat = `no-repeat`;
           box.style.backgroundSize = `cover`;
         }
