@@ -1,12 +1,16 @@
 {
-  "name": "threedy",
+  "name": "dungeon",
   "version": "0.0.1",
   "description": "a simple 3d raycaster",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "tsc -watch"
+    "build": "tsc",
+    "watch": "node watch.js"
   },
-  "author": "",
-  "license": "MIT"
+  "author": "Eddie Obrams <eddieobrams@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "typescript": "^5.4.5"
+  }
 }

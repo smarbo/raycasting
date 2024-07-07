@@ -62,6 +62,9 @@ class Vector2 {
     array() {
         return [this.x, this.y];
     }
+    map(f) {
+        return new Vector2(f(this.x), f(this.y));
+    }
     dot(that) {
         return this.x * that.x + this.y * that.y;
     }
@@ -115,34 +118,35 @@ function radToDeg(rad) {
     return rad * (180 / Math.PI);
 }
 function decodeMap(encoded) {
-    let scene = JSON.parse(atob(encoded));
-    let result = [];
-    for (let y = 0; y < scene.length; y++) {
-        let row = [];
-        for (let x = 0; x < scene[y].length; x++) {
-            let cell = scene[y][x];
-            if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
-                row.push(Color.fromObject(cell));
+    return __awaiter(this, void 0, void 0, function* () {
+        let scene = JSON.parse(atob(encoded));
+        let result = [];
+        for (let y = 0; y < scene.length; y++) {
+            let row = [];
+            for (let x = 0; x < scene[y].length; x++) {
+                let cell = scene[y][x];
+                if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
+                    row.push(Color.fromObject(cell));
+                }
+                else if (cell && 'url' in cell) {
+                    let cellRes = yield loadImageData(cell.url).catch(() => Color.purple());
+                    row.push(cellRes);
+                }
+                else {
+                    row.push(null);
+                }
             }
-            else if (cell && 'url' in cell) {
-                let img = document.createElement("img");
-                img.src = cell.url;
-                row.push(img);
-            }
-            else {
-                row.push(null);
-            }
+            result.push(row);
         }
-        result.push(row);
-    }
-    return result;
+        return result;
+    });
 }
 const EPS = 1e-6;
 const NEAR_CLIPPING_PLANE = 0.25;
 const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
 // resolution of screen (how many rays are shot)
-const SCREEN_WIDTH = 400;
+const SCREEN_WIDTH = 300;
 const PLAYER_STEP_LEN = 0.5;
 const PLAYER_SPEED = 3;
 // 0.25 is too slow, 1 is too fast
@@ -286,6 +290,8 @@ function renderScene(ctx, player, scene) {
                 else
                     u = t.x;
                 ctx.drawImage(cell, u * cell.width, 0, 1, cell.height, x * stripWidth, (ctx.canvas.height - stripHeight) * 0.5, stripWidth, stripHeight);
+                ctx.fillStyle = new Color(0, 0, 0, 1 - 1 / v.dot(d)).toStyle();
+                ctx.fillRect(x * stripWidth, (ctx.canvas.height - stripHeight) * 0.5, stripWidth, stripHeight);
             }
         }
     }
@@ -335,9 +341,7 @@ function loadImageData(url) {
     const ctx = game.getContext("2d");
     if (ctx === null)
         throw new Error("2D Context not supported.");
-    const blueMan = yield loadImageData("images/profile.jpg");
-    const typeScript = yield loadImageData("images/typescript.jpg");
-    let scene = decodeMap("W1t7InIiOjAsImciOjEsImIiOjAsImEiOjF9LHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsLG51bGwseyJyIjowLCJnIjowLCJiIjoxLCJhIjoxfSxudWxsXSxbeyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3Byb2ZpbGUuanBnIn0sbnVsbCxudWxsLHsiciI6MCwiZyI6MSwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbF0sW3siciI6MCwiZyI6MSwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsiciI6MCwiZyI6MCwiYiI6MSwiYSI6MX0seyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3R5cGVzY3JpcHQuanBnIn1dLFt7InIiOjEsImciOjAsImIiOjAsImEiOjF9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsXSxbbnVsbCx7InVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6Njk2OS9pbWFnZXMvcHJvZmlsZS5qcGcifSxudWxsLG51bGwseyJyIjoxLCJnIjowLCJiIjowLCJhIjoxfSxudWxsLG51bGwseyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3R5cGVzY3JpcHQuanBnIn1dLFtudWxsLG51bGwseyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSxudWxsXSxbeyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3Byb2ZpbGUuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGxdXQ==");
+    let scene = yield decodeMap("W1t7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGxdLFt7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW3sidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9XSxbeyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LG51bGwseyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbF0sW251bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdXQ==");
     /*let scene: Scene = [
       [
         null,
@@ -433,7 +437,11 @@ function loadImageData(url) {
             angularVelocity += Math.PI * PLAYER_ROT_SPEED;
         }
         player.direction = player.direction + angularVelocity * deltaTime;
-        player.position = player.position.add(velocity.scale(deltaTime));
+        const newPosition = player.position.add(velocity.scale(deltaTime));
+        const newCellPosition = newPosition.map(Math.floor);
+        if (!(insideScene(scene, newCellPosition) && scene[Math.floor(newCellPosition.y)][Math.floor(newCellPosition.x)] !== null)) {
+            player.position = newPosition;
+        }
         renderGame(ctx, player, scene);
         window.requestAnimationFrame(frame);
     };

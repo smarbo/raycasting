@@ -73,6 +73,10 @@ class Vector2 {
     return [this.x, this.y];
   }
 
+  map(f: (x: number) => number): Vector2 {
+    return new Vector2(f(this.x), f(this.y));
+  }
+
   dot(that: Vector2): number {
     return this.x * that.x + this.y * that.y;
   }
@@ -142,7 +146,7 @@ function radToDeg(rad: number): number {
   return rad * (180 / Math.PI);
 }
 
-function decodeMap(encoded: string): Scene {
+async function decodeMap(encoded: string): Promise<Scene> {
   let scene: (Color | EncodedColor | ImageURL | null)[][] = JSON.parse(atob(encoded));
   let result: Scene = [];
 
@@ -153,9 +157,8 @@ function decodeMap(encoded: string): Scene {
       if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
         row.push(Color.fromObject(cell as EncodedColor));
       } else if (cell && 'url' in cell) {
-        let img = document.createElement("img");
-        img.src = (cell as ImageURL).url;
-        row.push(img);
+        let cellRes = await loadImageData((cell as ImageURL).url).catch(() => Color.purple());
+        row.push(cellRes);
       } else {
         row.push(null);
       }
@@ -170,7 +173,7 @@ const NEAR_CLIPPING_PLANE = 0.25;
 const FAR_CLIPPING_PLANE = 10.0;
 const FOV = degToRad(100);
 // resolution of screen (how many rays are shot)
-const SCREEN_WIDTH = 400;
+const SCREEN_WIDTH = 300;
 const PLAYER_STEP_LEN = 0.5;
 const PLAYER_SPEED = 3;
 // 0.25 is too slow, 1 is too fast
@@ -219,7 +222,9 @@ function hittingCell(p1: Vector2, p2: Vector2): Vector2 {
   );
 }
 
-type Scene = Array<Array<Color | HTMLImageElement | null>>;
+type Cell = Color | HTMLImageElement | null;
+type Scene = Array<Array<Cell>>;
+
 
 function castRay(scene: Scene, p1: Vector2, p2: Vector2): Vector2 {
   let start = p1;
@@ -371,6 +376,8 @@ function renderScene(
         else u = t.x;
 
         ctx.drawImage(cell, u*cell.width, 0, 1, cell.height, x*stripWidth, (ctx.canvas.height - stripHeight)*0.5, stripWidth, stripHeight)
+        ctx.fillStyle = new Color(0,0,0,1 - 1/v.dot(d)).toStyle();
+        ctx.fillRect(x*stripWidth, (ctx.canvas.height - stripHeight)*0.5, stripWidth, stripHeight);
       }
     }
   }
@@ -439,10 +446,7 @@ async function loadImageData(url: string): Promise<HTMLImageElement> {
   const ctx = game.getContext("2d") as CanvasRenderingContext2D;
   if (ctx === null) throw new Error("2D Context not supported.");
 
-  const blueMan = await loadImageData("images/profile.jpg");
-  const typeScript = await loadImageData("images/typescript.jpg");
-
-  let scene = decodeMap("W1t7InIiOjAsImciOjEsImIiOjAsImEiOjF9LHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsLG51bGwseyJyIjowLCJnIjowLCJiIjoxLCJhIjoxfSxudWxsXSxbeyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3Byb2ZpbGUuanBnIn0sbnVsbCxudWxsLHsiciI6MCwiZyI6MSwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbF0sW3siciI6MCwiZyI6MSwiYiI6MCwiYSI6MX0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsiciI6MCwiZyI6MCwiYiI6MSwiYSI6MX0seyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3R5cGVzY3JpcHQuanBnIn1dLFt7InIiOjEsImciOjAsImIiOjAsImEiOjF9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsXSxbbnVsbCx7InVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6Njk2OS9pbWFnZXMvcHJvZmlsZS5qcGcifSxudWxsLG51bGwseyJyIjoxLCJnIjowLCJiIjowLCJhIjoxfSxudWxsLG51bGwseyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3R5cGVzY3JpcHQuanBnIn1dLFtudWxsLG51bGwseyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSxudWxsXSxbeyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjY5NjkvaW1hZ2VzL3Byb2ZpbGUuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo2OTY5L2ltYWdlcy90eXBlc2NyaXB0LmpwZyJ9LG51bGxdXQ==");
+  let scene = await decodeMap("W1t7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGxdLFt7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW3sidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0seyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9XSxbeyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LG51bGwseyJ1cmwiOiJhc3NldHMvcm9ja193YWxsLmpwZyJ9LHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbF0sW251bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3JvY2tfd2FsbC5qcGcifSxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCx7InVybCI6ImFzc2V0cy9yb2NrX3dhbGwuanBnIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdXQ==");
 
 
   /*let scene: Scene = [
@@ -550,7 +554,11 @@ async function loadImageData(url: string): Promise<HTMLImageElement> {
     }
 
     player.direction = player.direction + angularVelocity * deltaTime;
-    player.position = player.position.add(velocity.scale(deltaTime));
+    const newPosition = player.position.add(velocity.scale(deltaTime));
+    const newCellPosition = newPosition.map(Math.floor);
+    if (!(insideScene(scene, newCellPosition) && scene[Math.floor(newCellPosition.y)][Math.floor(newCellPosition.x)] !== null)) {
+      player.position = newPosition;
+    }
     renderGame(ctx, player, scene);
     window.requestAnimationFrame(frame);
   };
