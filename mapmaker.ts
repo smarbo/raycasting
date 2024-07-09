@@ -1,3 +1,5 @@
+import Color from "./Color";
+
 const mapWInput = document.querySelector("#mapWidth") as HTMLInputElement;
 const mapHInput = document.querySelector("#mapHeight") as HTMLInputElement;
 const mapCode = document.querySelector("#mapCode") as HTMLInputElement;
@@ -12,9 +14,6 @@ function encode(map: MakerScene): string {
   return btoa(mapString);
 }
 
-function decode(code: string): MakerScene {
-  return JSON.parse(atob(code));
-}
 
 function decodeMakerMap(encoded: string): MakerScene {
   let scene: MakerScene = JSON.parse(atob(encoded));

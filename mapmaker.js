@@ -1,4 +1,4 @@
-"use strict";
+import Color from "./Color";
 const mapWInput = document.querySelector("#mapWidth");
 const mapHInput = document.querySelector("#mapHeight");
 const mapCode = document.querySelector("#mapCode");
@@ -8,9 +8,6 @@ const encodingResult = document.querySelector("#encodingResult");
 function encode(map) {
     const mapString = JSON.stringify(map);
     return btoa(mapString);
-}
-function decode(code) {
-    return JSON.parse(atob(code));
 }
 function decodeMakerMap(encoded) {
     let scene = JSON.parse(atob(encoded));

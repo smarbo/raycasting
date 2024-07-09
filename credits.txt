@@ -1,1 +1,1 @@
-Stone wall texture: https://opengameart.org/content/stone-wall-with-cracks
+wall texture: https://opengameart.org/content/old-wall-texture-w-normalheight
