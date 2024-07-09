@@ -2,7 +2,7 @@ type ImageURL = {
   url: string
 }
 
-type EncodedColor = {
+type EncodedRGBA = {
   r: number,
   g: number,
   b: number,

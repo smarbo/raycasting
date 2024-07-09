@@ -1,7 +1,7 @@
-import Color from "./Color.js";
+import RGBA from "./Color.js";
 import Vector2 from "./Vector.js";
 
-export type Cell = Color | HTMLImageElement | null;
+export type Cell = RGBA | HTMLImageElement | null;
 
 export default class Scene {
   cells: Array<Cell>;

@@ -1,4 +1,4 @@
-export default class Color {
+export default class RGBA {
   constructor(
     public r: number,
     public g: number,
@@ -6,28 +6,28 @@ export default class Color {
     public a: number,
   ) { }
 
-  static red(): Color {
-    return new Color(1, 0, 0, 1);
+  static red(): RGBA {
+    return new RGBA(1, 0, 0, 1);
   }
 
-  static green(): Color {
-    return new Color(0, 1, 0, 1);
+  static green(): RGBA {
+    return new RGBA(0, 1, 0, 1);
   }
 
-  static blue(): Color {
-    return new Color(0, 0, 1, 1);
+  static blue(): RGBA {
+    return new RGBA(0, 0, 1, 1);
   }
 
-  static yellow(): Color {
-    return new Color(1, 1, 0, 1);
+  static yellow(): RGBA {
+    return new RGBA(1, 1, 0, 1);
   }
 
-  static purple(): Color {
-    return new Color(1, 0, 1, 1);
+  static purple(): RGBA {
+    return new RGBA(1, 0, 1, 1);
   }
 
-  static cyan(): Color {
-    return new Color(0, 1, 1, 1);
+  static cyan(): RGBA {
+    return new RGBA(0, 1, 1, 1);
   }
 
   static fromObject(object: {
@@ -35,13 +35,13 @@ export default class Color {
     g: number;
     b: number;
     a: number;
-  }): Color {
+  }): RGBA {
     let { r, g, b, a } = object;
-    return new Color(r, g, b, a);
+    return new RGBA(r, g, b, a);
   }
 
-  brightness(factor: number): Color {
-    return new Color(factor * this.r, factor * this.g, factor * this.b, this.a);
+  brightness(factor: number): RGBA {
+    return new RGBA(factor * this.r, factor * this.g, factor * this.b, this.a);
   }
 
   toStyle(): string {

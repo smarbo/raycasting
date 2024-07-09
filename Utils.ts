@@ -1,4 +1,4 @@
-import Color from "./Color.js";
+import RGBA from "./Color.js";
 import Scene, { Cell } from "./Scene.js";
 import Vector2 from "./Vector.js";
 
@@ -21,17 +21,17 @@ export async function loadImageData(url: string): Promise<HTMLImageElement> {
 
 
 export async function decodeMap(encoded: string): Promise<Scene> {
-  let scene: (Color | EncodedColor | ImageURL | null)[][] = JSON.parse(atob(encoded));
+  let scene: (RGBA | EncodedRGBA | ImageURL | null)[][] = JSON.parse(atob(encoded));
   let result: Array<Array<Cell>> = [];
 
   for (let y = 0; y < scene.length; y++) {
-    let row: Array<Color | HTMLImageElement | null> = [];
+    let row: Array<RGBA | HTMLImageElement | null> = [];
     for (let x = 0; x < scene[y].length; x++) {
       let cell = scene[y][x];
       if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
-        row.push(Color.fromObject(cell as EncodedColor));
+        row.push(RGBA.fromObject(cell as EncodedRGBA));
       } else if (cell && 'url' in cell) {
-        let cellRes = await loadImageData((cell as ImageURL).url).catch(() => Color.purple());
+        let cellRes = await loadImageData((cell as ImageURL).url).catch(() => RGBA.purple());
         row.push(cellRes);
       } else {
         row.push(null);

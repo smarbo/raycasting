@@ -21,9 +21,9 @@
     </div>
   </div>
     <code id="encodingResult" style="color: white;"></code><br><button onclick="copyResult()">Copy</button>
-  <script src="mapmaker.js"></script>
+  <script type="module" src="mapmaker.js"></script>
   <script src="types.js"></script>
-  <script src="index.js"></script>
+  <script type="module" src="index.js"></script>
     <script>
     function copyResult () {
       navigator.clipboard.writeText(encodingResult.innerText);

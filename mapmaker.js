@@ -1,4 +1,4 @@
-import Color from "./Color";
+import RGBA from "./Color.js";
 const mapWInput = document.querySelector("#mapWidth");
 const mapHInput = document.querySelector("#mapHeight");
 const mapCode = document.querySelector("#mapCode");
@@ -17,7 +17,7 @@ function decodeMakerMap(encoded) {
         for (let x = 0; x < scene[y].length; x++) {
             let cell = scene[y][x];
             if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
-                row.push(Color.fromObject(cell));
+                row.push(RGBA.fromObject(cell));
             }
             else if (cell && cell.url) {
                 row.push(cell);
@@ -83,10 +83,10 @@ mapButton.onclick = () => {
         imageBtn.onclick = () => {
             resetBorders();
             if (imageBtn)
-                imageBtn.style.border = `2px solid ${borderColor}`;
+                imageBtn.style.border = `2px solid ${borderRGBA}`;
             selected = urlObj;
         };
-        imageBtn.style.border = `2px solid ${borderColor}`;
+        imageBtn.style.border = `2px solid ${borderRGBA}`;
         barItems.append(imageBtn);
         selected = urlObj;
     };
@@ -98,26 +98,26 @@ mapButton.onclick = () => {
         if (imageBtn)
             imageBtn.style.border = "";
     }
-    const borderColor = "white";
+    const borderRGBA = "white";
     redBtn.onclick = () => {
-        selected = Color.red();
+        selected = RGBA.red();
         resetBorders();
-        redBtn.style.border = `2px solid ${borderColor}`;
+        redBtn.style.border = `2px solid ${borderRGBA}`;
     };
     greenBtn.onclick = () => {
-        selected = Color.green();
+        selected = RGBA.green();
         resetBorders();
-        greenBtn.style.border = `2px solid ${borderColor}`;
+        greenBtn.style.border = `2px solid ${borderRGBA}`;
     };
     blueBtn.onclick = () => {
-        selected = Color.blue();
+        selected = RGBA.blue();
         resetBorders();
-        blueBtn.style.border = `2px solid ${borderColor}`;
+        blueBtn.style.border = `2px solid ${borderRGBA}`;
     };
     eraseBtn.onclick = () => {
         selected = null;
         resetBorders();
-        eraseBtn.style.border = `2px solid ${borderColor}`;
+        eraseBtn.style.border = `2px solid ${borderRGBA}`;
     };
     function updateMap() {
         mapMakerContainer.innerHTML = "";
@@ -129,7 +129,7 @@ mapButton.onclick = () => {
                 const box = document.createElement("div");
                 box.classList.add("grid-box");
                 let cell = map[col][row];
-                if (cell instanceof Color) {
+                if (cell instanceof RGBA) {
                     box.style.background = cell.toStyle();
                 }
                 else if (cell && cell.url) {

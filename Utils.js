@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import Color from "./Color.js";
+import RGBA from "./Color.js";
 import Scene from "./Scene.js";
 import Vector2 from "./Vector.js";
 export function degToRad(deg) {
@@ -35,10 +35,10 @@ export function decodeMap(encoded) {
             for (let x = 0; x < scene[y].length; x++) {
                 let cell = scene[y][x];
                 if (cell && 'r' in cell && 'g' in cell && 'b' in cell && 'a' in cell) {
-                    row.push(Color.fromObject(cell));
+                    row.push(RGBA.fromObject(cell));
                 }
                 else if (cell && 'url' in cell) {
-                    let cellRes = yield loadImageData(cell.url).catch(() => Color.purple());
+                    let cellRes = yield loadImageData(cell.url).catch(() => RGBA.purple());
                     row.push(cellRes);
                 }
                 else {

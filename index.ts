@@ -1,4 +1,4 @@
-import Color from "./Color.js";
+import RGBA from "./Color.js";
 import Scene from "./Scene.js";
 import { degToRad, decodeMap, canvasSize } from "./Utils.js";
 import Vector2 from "./Vector.js";
@@ -129,7 +129,7 @@ function renderMinimap(
     for (let x = 0; x < gridSize.x; x++) {
       const cell = scene.getCell(new Vector2(x, y));
 
-      if (cell instanceof Color) {
+      if (cell instanceof RGBA) {
         ctx.fillStyle = cell.toStyle();
         ctx.fillRect(x, y, 1, 1);
       } else if (cell instanceof HTMLImageElement) {
@@ -173,7 +173,7 @@ function renderScene(
     const p = castRay(scene, player.position, r1.lerp(r2, x / SCREEN_WIDTH));
     const c = hittingCell(player.position, p);
     const cell = scene.getCell(c);
-    if (cell instanceof Color) {
+    if (cell instanceof RGBA) {
       const v = p.sub(player.position);
       const d = Vector2.fromAngle(player.direction);
 
@@ -207,7 +207,7 @@ function renderScene(
         stripWidth,
         stripHeight,
       );
-      ctx.fillStyle = new Color(0, 0, 0, 1 - 1 / v.dot(d)).toStyle();
+      ctx.fillStyle = new RGBA(0, 0, 0, 1 - 1 / v.dot(d)).toStyle();
       ctx.fillRect(
         x * stripWidth,
         (ctx.canvas.height - stripHeight) * 0.5,
@@ -238,6 +238,7 @@ class Player {
 }
 
 function canPlayerGoThere(scene: Scene, pos: Vector2): boolean {
+  // TODO: Try circle boundary
   const corner = pos.sub(Vector2.fromScalar(PLAYER_SIZE * 0.5));
   for (let dx = 0; dx < 2; ++dx) {
     for (let dy = 0; dy < 2; ++dy) {
@@ -264,10 +265,14 @@ function renderGame(
   );
   const minimapSize = scene.size().scale(cellSize);
 
+  ctx.fillStyle = "hsla(220, 20%, 30%, 1.0)";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
   ctx.fillStyle = "#181818";
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillRect(0,ctx.canvas.height*0.5, ctx.canvas.width, ctx.canvas.height * 0.5);
+
   renderScene(ctx, player, scene);
-  renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
+  //renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 }
 
 (async () => {
@@ -283,11 +288,11 @@ function renderGame(
   if (ctx === null) throw new Error("2D Context not supported.");
 
   let scene = await decodeMap(
-    "W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwyLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDIucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDQucG5nIn1dLFtudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDIucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwzLnBuZyJ9XSxbbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwzLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwzLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMi5wbmcifV0sW251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDQucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDIucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbF0sW251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsXV0=",
+    "W1tudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsXSxbbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifV0sW251bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwzLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGw0LnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFtudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFt7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDQucG5nIn0sbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbeyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn1dLFt7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwseyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifV0sW3sidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLHsiciI6MSwiZyI6MCwiYiI6MCwiYSI6MX0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9XSxbeyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0seyJyIjowLCJnIjoxLCJiIjowLCJhIjoxfSx7InVybCI6ImFzc2V0cy93YWxsNC5wbmcifSx7InIiOjAsImciOjAsImIiOjEsImEiOjF9LHsiciI6MCwiZyI6MCwiYiI6MSwiYSI6MX0seyJ1cmwiOiJhc3NldHMvd2FsbDEucG5nIn0sbnVsbCx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifSx7InVybCI6ImFzc2V0cy93YWxsMS5wbmcifV0sW3sidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LHsidXJsIjoiYXNzZXRzL3dhbGwxLnBuZyJ9LG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLG51bGxdXQ==",
   );
 
   /*
-  let wall = await loadImageData("/assets/rock_wall.jpg").catch(() => Color.purple());  
+  let wall = await loadImageData("/assets/rock_wall.jpg").catch(() => RGBA.purple());  
   let scene = new Scene([
     [null,null,null,null,null,null,null,null,null,],
     [null,null,wall,wall,wall,null,null,null,null,],
